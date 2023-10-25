@@ -1,0 +1,42 @@
+1. Создал два табличных пространства, одно для всего хранилища книг, второе для истории изменения их цены у различных продавцов (допустим я что-то захочу продать из своей библиотеки)
+library=# select * from pg_tablespace
+library-# ;
+  oid  |    spcname    | spcowner | spcacl | spcoptions
+-------+---------------+----------+--------+------------
+  1663 | pg_default    |       10 |        |
+  1664 | pg_global     |       10 |        |
+ 16459 | library_space |       10 |        |
+ 16480 | history_space |       10 |        |
+(4 rows)
+
+library=#
+
+2.
+Создал три схемы
+history - информация о книгах и их ценах у различных продавцов (авито, озон, частники) с динамикой по дате, что бы отследить вдруг на что-то спрос возрастет
+rent - книги которые я отдал кому-нибудь почитать, вообще я просто подумываю что дальше буду развивать это как БД допустим библиотеки, поэтому изначально сделал задел
+storage - в этой схеме я храню книги и информацию о них
+library=# set search_path TO storage, rent, history;
+SET
+library=# \dt
+              List of relations
+ Schema  |      Name       | Type  |  Owner
+---------+-----------------+-------+----------
+ history | prices          | table | postgres
+ history | sellers         | table | postgres
+ rent    | readers         | table | postgres
+ rent    | rented_books    | table | postgres
+ storage | authors         | table | postgres
+ storage | books           | table | postgres
+ storage | booksauthors    | table | postgres
+ storage | bookscategories | table | postgres
+ storage | bookstags       | table | postgres
+ storage | subcategories   | table | postgres
+(10 rows)
+
+3. Создал трех пользователей
+owner - владелец таблиц, может совершать все операции
+reader - читатель, может подключиться ко всем таблицам схемы rent и storage и посмотреть, что можно взять почитать
+seller - может совершать все операции с таблицами схемы history (записывать цены, добавлять продавцов книг, удалять) и операции чтения из схемы storage
+
+4. таблицы относящиеся к history разместил на отдельном tablespace т.к. туда будет записываться относительно(непрофессиональной системы) большой объем данных, если допустим у меня 300 книг в библиотеке и я каждый день делаю запрос цен на них пусть даже у 3 источников каждую книгу это будет 900 записей в день и 365 000  в год
